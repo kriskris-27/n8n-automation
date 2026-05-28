@@ -1,0 +1,289 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1YIuyEAoLe-AVgHtyGGcu_RlzzC9zSxDf",
+          "mode": "list",
+          "cachedResultName": "Fintech-Uploads",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1YIuyEAoLe-AVgHtyGGcu_RlzzC9zSxDf"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        -16
+      ],
+      "id": "fee4b073-d58f-4e92-b083-837359a70bcc",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "sp7aJSnt4463LbI8",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -16,
+        -16
+      ],
+      "id": "08b14067-c5d3-4b14-b796-47952e779ea7",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "sp7aJSnt4463LbI8",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        -16
+      ],
+      "id": "b1508eac-26c0-411a-8186-56a19e508c4f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert operations assistant at Vitto. Your job is to analyze internal documents and provide high-quality, structured operational insights.\n\nYou must output your response as a raw, valid JSON object with exactly these keys. Do not nest them under other keys:\n{\n  \"document_type\": \"Invoice, Contract, Report, or Unknown\",\n  \"key_entity\": \"The main company or individual name mentioned\",\n  \"bullet_1\": \"First bullet point detailing financial or operational impact.\",\n  \"bullet_2\": \"Second bullet point detailing major deadlines, amounts, or requirements.\",\n  \"bullet_3\": \"Third bullet point detailing the immediate next steps for the ops team.\"\n}\n\nStrict Rule: Do not include any conversational filler, markdown formatting blocks (like ```json), or extra text. Return ONLY the raw JSON string.\n\nDocument Text to Analyze:\n======================\n{{ $json.text }}\n======================",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        384,
+        -16
+      ],
+      "id": "7fd6751b-ee48-41ea-b99b-ed40e15a5372",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        176
+      ],
+      "id": "5f90e6c1-3de7-4694-bd75-c2ea4e231765",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ywCXL81N0CzLYIbU",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TvRSXbsZK58oxkFP6euZucDGxNUkYKAzN3kKv_0bXuM",
+          "mode": "list",
+          "cachedResultName": "vitto-automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TvRSXbsZK58oxkFP6euZucDGxNUkYKAzN3kKv_0bXuM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TvRSXbsZK58oxkFP6euZucDGxNUkYKAzN3kKv_0bXuM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Company": "={{ JSON.parse($json.text).key_entity }}",
+            "Operational Impact": "={{ JSON.parse($json.text).bullet_1 }}",
+            "Type": "={{ JSON.parse($json.text).document_type }}",
+            "Deadlines & Terms": "={{ JSON.parse($json.text).bullet_2 }}",
+            "Next Steps": "={{ JSON.parse($json.text).bullet_3 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Operational Impact",
+              "displayName": "Operational Impact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Deadlines & Terms",
+              "displayName": "Deadlines & Terms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Next Steps",
+              "displayName": "Next Steps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        -16
+      ],
+      "id": "e585b0ed-0538-4e7b-b7f6-16ac16588757",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7hf6egE8noZYNeqY",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "86964880-b455-4cdc-a854-e1aea4a7d432",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b9b396ad726bb85d97ed48dfe39d4f1bc0db9a956b2e0a1cdd4d59ebd8e74e64"
+  },
+  "id": "zfHWIlHXO9jLYjNc",
+  "tags": []
+}
